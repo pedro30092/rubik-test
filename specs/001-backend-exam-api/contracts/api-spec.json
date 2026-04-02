@@ -1,0 +1,198 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Rubik Exam Session API",
+    "version": "1.0.0",
+    "description": "Phase 1 — Backend Foundation. Manages exam sessions. No authentication required (dev environment only)."
+  },
+  "servers": [
+    {
+      "url": "https://{apiId}.execute-api.{region}.amazonaws.com",
+      "description": "AWS API Gateway HTTP API (v2) — dev stage",
+      "variables": {
+        "apiId": { "default": "<your-api-id>" },
+        "region": { "default": "us-east-1" }
+      }
+    }
+  ],
+  "paths": {
+    "/v1/exams": {
+      "post": {
+        "operationId": "startExamSession",
+        "summary": "Start a new exam session",
+        "description": "Creates a new exam session record. Returns a time-ordered sessionId that must be used to finish the session.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/StartExamRequest" },
+              "examples": {
+                "validRequest": {
+                  "summary": "Valid exam start",
+                  "value": { "examType": "TESTING" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StartExamResponse" },
+                "examples": {
+                  "success": {
+                    "value": { "sessionId": "2026-04-02T15:30:00.000Z#a3f9" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or missing examType",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "missingExamType": {
+                    "value": { "error": "examType is required" }
+                  },
+                  "invalidExamType": {
+                    "value": { "error": "examType must be one of: TESTING" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/exams/{sessionId}": {
+      "put": {
+        "operationId": "finishExamSession",
+        "summary": "Finish an existing exam session",
+        "description": "Marks a session as complete. Computes elapsed time server-side and stores result. The sessionId path parameter must be URL-encoded (replace # with %23, : with %3A).",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "description": "The sessionId returned by POST /v1/exams. Must be URL-encoded: replace '#' with '%23' and ':' with '%3A'.",
+            "schema": { "type": "string" },
+            "example": "2026-04-02T15%3A30%3A00.000Z%23a3f9"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FinishExamRequest" },
+              "examples": {
+                "pass": { "value": { "result": "pass" } },
+                "fail": { "value": { "result": "fail" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session finished successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FinishExamResponse" },
+                "examples": {
+                  "success": { "value": { "status": "updated" } }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid result value or malformed body",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "invalidResult": {
+                    "value": { "error": "result must be one of: pass, fail" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "notFound": {
+                    "value": { "error": "session not found" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StartExamRequest": {
+        "type": "object",
+        "required": ["examType"],
+        "properties": {
+          "examType": {
+            "type": "string",
+            "enum": ["TESTING"],
+            "description": "The type of exam to start. Phase 1 supports TESTING only."
+          }
+        }
+      },
+      "StartExamResponse": {
+        "type": "object",
+        "required": ["sessionId"],
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Unique time-ordered identifier for the created session. Format: <ISO-8601-UTC>#<4-char-hex>. Must be URL-encoded when used in the PUT path.",
+            "example": "2026-04-02T15:30:00.000Z#a3f9"
+          }
+        }
+      },
+      "FinishExamRequest": {
+        "type": "object",
+        "required": ["result"],
+        "properties": {
+          "result": {
+            "type": "string",
+            "enum": ["pass", "fail"],
+            "description": "The outcome of the exam session."
+          }
+        }
+      },
+      "FinishExamResponse": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["updated"],
+            "example": "updated"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable error description."
+          }
+        }
+      }
+    }
+  }
+}
