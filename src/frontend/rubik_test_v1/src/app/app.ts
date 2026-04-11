@@ -5,10 +5,10 @@ import { Header } from './layout/header';
 import { Sidebar } from './layout/sidebar';
 
 @Component({
-  selector: 'app-root',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, MatSidenavContainer, MatSidenav, MatSidenavContent, Header, Sidebar],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
+    selector: 'app-root',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [RouterOutlet, MatSidenavContainer, MatSidenav, MatSidenavContent, Header, Sidebar],
+    templateUrl: './app.html',
+    styleUrls: ['./app.scss'],
 })
 export class App {}
